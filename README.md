@@ -1,4 +1,8 @@
-# Quickstart
+# This is a GUI implementation to interface with a [DiscoArt](https://github.com/jina-ai/discoart) server.
+
+# 
+
+# Development Quickstart
 
 ## 1. Create virtualenv
 
