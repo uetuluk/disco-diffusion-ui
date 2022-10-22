@@ -4,8 +4,13 @@ import os
 import asyncio
 from random import randint 
 
+st.set_page_config(page_title="Disco Diffusion", page_icon="🎨")
 st.title('Disco Diffusion')
-form = st.form("prompt_form")
+# form = st.form("prompt_form")
+textinput_left, textinput_right = st.columns([10, 1])
+left, right = st.columns([1, 2])
+image_preview_tab_container = right.tabs(["Image Preview"])
+image_preview_tab = image_preview_tab_container.container()
 
 # ENV Variables
 HOST_LOCATION = os.environ['SERVER_LOCATION']
@@ -28,6 +33,7 @@ async def disco_request(text_prompts: list, name_docarray: str):
             'batch_size': 1,
             'cutn_batches': 1,
             'n_batches': 1,
+            'seed': st.session_state.seed,
             'steps': st.session_state.steps,
             'width_height': [st.session_state.width, st.session_state.height]
         },
@@ -84,7 +90,7 @@ async def preview_handler_wait():
     # preview_task = asyncio.create_task(preview_handler(st.session_state.name_docarray))
     # print("Running the preview handler wait loop")
     completed = False
-    preview_image = form.empty()
+    preview_image = image_preview_tab.empty()
     while len(preview_response_array) < 1 or not completed:
         # print("Waiting for preview response")
         await asyncio.sleep(1)
@@ -99,7 +105,9 @@ async def preview_handler_wait():
 
 
 async def prompt_handler():
-    create_task = asyncio.create_task(disco_request(st.session_state.text_prompts, st.session_state.name_docarray))
+    text_prompt_array = st.session_state.text_prompts.split(",")
+
+    create_task = asyncio.create_task(disco_request(text_prompt_array, st.session_state.name_docarray))
 
     # asyncio.to_thread(blocking_disco_request(st.session_state.text_prompts, st.session_state.name_docarray))
     
@@ -149,18 +157,23 @@ def click_handler():
 st.session_state["input_help"] = ""
 
 def main():
-    form.text_input(label="Please input the prompts", key="text_prompts")
+
+    textinput_left.text_input(label="Input Prompt", key="text_prompts", placeholder="A beautiful painting of a singular lighthouse, yellow color scheme")
+    textinput_right.text("")
+    textinput_right.text("")
+    textinput_right.button(label="Start", on_click=click_handler, )
+
+    left.number_input(label="Sampling Steps:", min_value=10, max_value=300, value=200, key="steps")
+
+    left.number_input(label="Width:", min_value=100, max_value=1024, value=500, key="width")
+
+    left.number_input(label="Height:", min_value=100, max_value=1024, value=500, key="height")
+
+    left.text_input(label="Seed:", key="seed",  help="The seed to use, if left blank a random seed will be generated.")
     
-    form.number_input(label="Steps", min_value=50, max_value=200, key="steps")
 
-    form.number_input(label="Width", min_value=300, max_value=500, key="width")
-
-    form.number_input(label="Height", min_value=300, max_value=500, key="height")
-
-    form.form_submit_button(label="Start", on_click=click_handler)
-
-    form.text("Current Image ID:")
-    form.text(st.session_state.name_docarray)
+    left.text("Current Image ID:")
+    left.text(st.session_state.name_docarray)
 
 
 if __name__ == "__main__":
