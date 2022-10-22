@@ -14,5 +14,13 @@ pyenv local disco-diffusion-ui
 ## 2. Install requirements
 
 ```bash
-pip install -r requirements.txt
+make install-dev
+```
+
+## 3. Setup Environment
+Use direnv and .envrc.example file.
+
+```bash
+mv .envrc.example .envrc
+direnv allow .envrc
 ```

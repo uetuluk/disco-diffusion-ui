@@ -3,7 +3,13 @@ help: ## display this help message
 	@grep '^[a-zA-Z]' $(MAKEFILE_LIST) | sort | awk -F ':.*?## ' 'NF==2 {printf "\033[36m  %-25s\033[0m %s\n", $$1, $$2}'
 
 client: ## access client
-	SERVER_LOCATION="https://disco-diffusion2.ritsdev.top" python client.py
+	SERVER_LOCATION=$(SERVER_LOCATION) python client.py
 
 gui: ## Run Streamlit
-	SERVER_LOCATION="https://disco-diffusion2.ritsdev.top" streamlit run gui.py
+	SERVER_LOCATION=$(SERVER_LOCATION) streamlit run gui.py
+
+install: ## Install Requirement
+	pip install -r requirements.txt
+
+install-dev: ## Install Requirement for Development
+	pip install -r requirements.dev.txt

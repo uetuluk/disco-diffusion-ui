@@ -1,0 +1,1 @@
+export SERVER_LOCATION="localhost:5000" 

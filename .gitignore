@@ -1,2 +1,4 @@
 .python-version
-.vscode
+.vscode/settings.json
+.envrc
+__pycache__
