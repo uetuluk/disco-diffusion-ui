@@ -2,18 +2,22 @@ import streamlit as st
 from jina import Client, Executor, requests, DocumentArray
 import os
 import asyncio
-from random import randint 
+from random import randint
+from yaml import Loader, load as load_yaml
 
-st.set_page_config(page_title="Disco Diffusion", page_icon="🎨")
+st.set_page_config(page_title="Disco Diffusion", page_icon="🎨", layout="wide")
 st.title('Disco Diffusion')
 # form = st.form("prompt_form")
 textinput_left, textinput_right = st.columns([10, 1])
-left, right = st.columns([1, 2])
-image_preview_tab_container = right.tabs(["Image Preview"])
+left, center, right = st.columns([1, 3, 1])
+[image_preview_tab_container] = center.tabs(["Image Preview"])
 image_preview_tab = image_preview_tab_container.container()
 
 # ENV Variables
 HOST_LOCATION = os.environ['SERVER_LOCATION']
+
+DIFFUSION_MODELS = [*load_yaml(open('models.yml'), Loader=Loader)]
+CLIP_MODELS = ['RN50::openai', 'RN50::yfcc15m', 'RN50::cc12m', 'RN50-quickgelu::openai', 'RN50-quickgelu::yfcc15m', 'RN50-quickgelu::cc12m', 'RN101::openai', 'RN101::yfcc15m', 'RN101-quickgelu::openai', 'RN101-quickgelu::yfcc15m', 'RN50x4::openai', 'RN50x16::openai', 'RN50x64::openai', 'ViT-B-32::openai', 'ViT-B-32::laion400m_e31', 'ViT-B-32::laion400m_e32', 'ViT-B-32::laion2b_e16', 'ViT-B-32::laion2b_s34b_b79k', 'ViT-B-32-quickgelu::openai', 'ViT-B-32-quickgelu::laion400m_e31', 'ViT-B-32-quickgelu::laion400m_e32', 'ViT-B-16::openai', 'ViT-B-16::laion400m_e31', 'ViT-B-16::laion400m_e32', 'ViT-B-16-plus-240::laion400m_e31', 'ViT-B-16-plus-240::laion400m_e32', 'ViT-L-14::openai', 'ViT-L-14::laion400m_e31', 'ViT-L-14::laion400m_e32', 'ViT-L-14::laion2b_s32b_b82k', 'ViT-L-14-336::openai', 'ViT-H-14::laion2b_s32b_b79k', 'ViT-g-14::laion2b_s12b_b42k'] # https://github.com/mlfoundations/open_clip#pretrained-model-interface
 
 # Initialize session state
 # st.session_state['create_request'] = []
@@ -120,7 +124,7 @@ async def prompt_handler():
     #     form.image(image=preview_response_array[0][0].uri)
     # else:
     if len(preview_response_array) < 1:
-        form.write("Error")
+        image_preview_tab.write("Error")
     # await preview_handler_wait()
 
     # done, pending = await asyncio.wait({create_task})
@@ -138,7 +142,7 @@ async def prompt_handler():
 
 def click_handler():
     if st.session_state.text_prompts == "":
-        form.error("Please input a prompt")
+        textinput_left.error("Please input a prompt")
         # text_input.help = "Please input a prompt"
     else:
         asyncio.run(prompt_handler())
@@ -161,7 +165,7 @@ def main():
     textinput_left.text_input(label="Input Prompt", key="text_prompts", placeholder="A beautiful painting of a singular lighthouse, yellow color scheme")
     textinput_right.text("")
     textinput_right.text("")
-    textinput_right.button(label="Start", on_click=click_handler, )
+    textinput_right.button(label="Start", on_click=click_handler)
 
     left.number_input(label="Sampling Steps:", min_value=10, max_value=300, value=200, key="steps")
 
@@ -175,6 +179,19 @@ def main():
     left.text("Current Image ID:")
     left.text(st.session_state.name_docarray)
 
+    model_settings = right.expander("Model Settings:", expanded=True)
+    model_settings.selectbox("Diffusion Model:", 
+        options=DIFFUSION_MODELS,
+        index=1,
+        key="diffusion_models",
+        )
+    
+    model_settings.checkbox("Secondary Model", value=True, key="secondary_model")
+
+    model_settings.multiselect("Clip Models:",
+        options=CLIP_MODELS,
+        default=["ViT-B-32::openai","ViT-B-16::openai","RN50::openai"],
+        key="clip_models")
 
 if __name__ == "__main__":
     # asyncio.run(main())

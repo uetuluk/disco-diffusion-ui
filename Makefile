@@ -13,3 +13,6 @@ install: ## Install Requirement
 
 install-dev: ## Install Requirement for Development
 	pip install -r requirements.dev.txt
+
+update-models: ## Get the latest model list
+	wget https://raw.githubusercontent.com/jina-ai/discoart/main/discoart/resources/models.yml
