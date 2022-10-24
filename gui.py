@@ -39,7 +39,14 @@ async def disco_request(text_prompts: list, name_docarray: str):
             'n_batches': 1,
             'seed': st.session_state.seed,
             'steps': st.session_state.steps,
-            'width_height': [st.session_state.width, st.session_state.height]
+            'width_height': [st.session_state.width, st.session_state.height],
+            'diffusion_model': st.session_state.diffusion_model,
+            'clip_models': st.session_state.clip_models,
+            'use_secondary_model': st.session_state.use_secondary_model,
+            'clip_guidance_scale': st.session_state.clip_guidance_scale,
+            'cut_ic_pow': st.session_state.cut_ic_pow,
+            'clamp_max': st.session_state.clamp_max,
+            'skip_steps': st.session_state.skip_steps,
         },
     ):
         create_response_array.append(resp)
@@ -144,8 +151,12 @@ def click_handler():
     if st.session_state.text_prompts == "":
         textinput_left.error("Please input a prompt")
         # text_input.help = "Please input a prompt"
-    else:
-        asyncio.run(prompt_handler())
+        return
+    if st.session_state.skip_steps > st.session_state.steps:
+        textinput_left.error("Skip steps cannot be greater than steps")
+        return
+    
+    asyncio.run(prompt_handler())
     
     # asyncio.to_thread(blocking_disco_request(st.session_state.text_prompts, st.session_state.name_docarray))
 
@@ -175,6 +186,15 @@ def main():
 
     left.text_input(label="Seed:", key="seed",  help="The seed to use, if left blank a random seed will be generated.")
     
+    advanced_settings = left.expander("Advanced Settings", expanded=False)
+
+    advanced_settings.number_input(label="cut_ic_pow:", min_value=0, max_value=100, value=1, key="cut_ic_pow", help="Higher Values = More Detail")
+
+    advanced_settings.number_input(label="clamp_max:", min_value=0.0, max_value=1.0, value=0.05, key="clamp_max", help="Increasing this value helps with saturation, increased contrast, and detail.")
+
+    advanced_settings.number_input(label="clip_guidance_scale:", min_value=0, max_value=500000, value=5000, key="clip_guidance_scale", help="This parameter guides how much Disco stays true to the prompt during the production of the image.")
+
+    advanced_settings.number_input(label="skip_steps:", min_value=0, max_value=300, value=0, key="skip_steps", help="This is the number of steps you skip ahead when starting a run.")
 
     left.text("Current Image ID:")
     left.text(st.session_state.name_docarray)
@@ -183,15 +203,17 @@ def main():
     model_settings.selectbox("Diffusion Model:", 
         options=DIFFUSION_MODELS,
         index=1,
-        key="diffusion_models",
+        key="diffusion_model",
         )
     
-    model_settings.checkbox("Secondary Model", value=True, key="secondary_model")
+    model_settings.checkbox("Use Secondary Model:", value=True, key="use_secondary_model")
 
     model_settings.multiselect("Clip Models:",
         options=CLIP_MODELS,
         default=["ViT-B-32::openai","ViT-B-16::openai","RN50::openai"],
         key="clip_models")
+    
+    
 
 if __name__ == "__main__":
     # asyncio.run(main())
