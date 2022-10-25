@@ -10,8 +10,8 @@ st.title('Disco Diffusion')
 # form = st.form("prompt_form")
 textinput_left, textinput_right = st.columns([10, 1])
 left, center, right = st.columns([1, 3, 1])
-[image_preview_tab_container] = center.tabs(["Image Preview"])
-image_preview_tab = image_preview_tab_container.container()
+[image_preview_tab] = center.tabs(["Image Preview"])
+# image_preview_tab_container = image_preview_tab.container()
 
 # ENV Variables
 HOST_LOCATION = os.environ['SERVER_LOCATION']
@@ -23,9 +23,16 @@ CLIP_MODELS = ['RN50::openai', 'RN50::yfcc15m', 'RN50::cc12m', 'RN50-quickgelu::
 # st.session_state['create_request'] = []
 st.session_state['name_docarray'] = "mydisco-" + str(randint(0, 1000))
 
+st.session_state['create_task'] = None
+st.session_state['preview_task'] = None
+
+st.session_state['status'] = 'idle'
+
 client = Client(host=HOST_LOCATION, asyncio=True)
 
 create_response_array = []
+
+# Default for session state advanced settings
 
 async def disco_request(text_prompts: list, name_docarray: str):
 
@@ -112,19 +119,23 @@ async def preview_handler_wait():
         if len(preview_response_array) > 0:
             latest_document = preview_response_array[-1]
             preview_image.image(image=latest_document.uri)
+            st.session_state.seed = str(latest_document.tags['seed'])
             completed = latest_document.tags["_status"]["completed"] is True
+            st.session_state.status = 'completed'
 
 
 async def prompt_handler():
     text_prompt_array = st.session_state.text_prompts.split(",")
 
-    create_task = asyncio.create_task(disco_request(text_prompt_array, st.session_state.name_docarray))
-
+    st.session_state.create_task = asyncio.create_task(disco_request(text_prompt_array, st.session_state.name_docarray))
+    st.session_state.preview_task = asyncio.create_task(preview_handler_wait())
     # asyncio.to_thread(blocking_disco_request(st.session_state.text_prompts, st.session_state.name_docarray))
     
+    st.session_state.status = 'running'
+
     await asyncio.gather(
-        create_task,
-        preview_handler_wait()
+        st.session_state.create_task,
+        st.session_state.preview_task
     )
 
     # if len(preview_response_array) > 0:
@@ -132,7 +143,20 @@ async def prompt_handler():
     # else:
     if len(preview_response_array) < 1:
         image_preview_tab.write("Error")
+        st.session_state.status = 'error'
     # await preview_handler_wait()
+
+    # done
+    # st.balloons()
+    else:
+        prompt_details = image_preview_tab.expander("Prompt Details", expanded=True)
+
+        prompt_details.write("Prompt: " + st.session_state.text_prompts)
+        prompt_details.write("Seed: " + str(st.session_state.seed))
+        prompt_details.write("Width: " + str(st.session_state.width))
+        prompt_details.write("Height: " + str(st.session_state.height))
+        prompt_details.write("Steps: " + str(st.session_state.steps))
+        prompt_details.write("Clip Guidance Scale: " + str(st.session_state.clip_guidance_scale))
 
     # done, pending = await asyncio.wait({create_task})
 
@@ -146,7 +170,6 @@ async def prompt_handler():
     # if create_task in pending:
     #     print("Pending once")
 
-
 def click_handler():
     if st.session_state.text_prompts == "":
         textinput_left.error("Please input a prompt")
@@ -157,6 +180,36 @@ def click_handler():
         return
     
     asyncio.run(prompt_handler())
+
+# def preview_click_handler(name_docarray):
+#     a = dict(st.session_state)
+#     print(st.session_state)
+#     if name_docarray == "" or st.session_state.status == 'idle':
+#         textinput_left.error("Please create a prompt first")
+#     else:
+#         st.session_state.name_docarray = name_docarray
+#         if st.session_state.status == 'completed' or st.session_state.status == 'error':
+#             st.session_state.preview_task = preview_handler_wait()
+#             asyncio.run(st.session_state.preview_task)
+        
+
+async def stop_prompt_handler(name_docarray):
+    async for resp in client.post(
+        '/stop',
+        parameters={
+            'name_docarray': name_docarray
+        },
+    ):
+        print(resp)
+
+def stop_click_handler():
+    asyncio.run(stop_prompt_handler(st.session_state.name_docarray))
+    if st.session_state.create_task:
+        st.session_state.create_task.cancel()
+    if st.session_state.preview_task:
+        st.session_state.preview_task.cancel()
+    st.stop()
+    # st.experimental_rerun()
     
     # asyncio.to_thread(blocking_disco_request(st.session_state.text_prompts, st.session_state.name_docarray))
 
@@ -172,6 +225,10 @@ def click_handler():
 st.session_state["input_help"] = ""
 
 def main():
+    # st.session_state['cut_ic_pow'] = 1
+    # st.session_state['clamp_max'] = 0.05
+    # st.session_state['clip_guidance_scale'] = 5000
+    # st.session_state['skip_steps'] = 0
 
     textinput_left.text_input(label="Input Prompt", key="text_prompts", placeholder="A beautiful painting of a singular lighthouse, yellow color scheme")
     textinput_right.text("")
@@ -195,6 +252,12 @@ def main():
     advanced_settings.number_input(label="clip_guidance_scale:", min_value=0, max_value=500000, value=5000, key="clip_guidance_scale", help="This parameter guides how much Disco stays true to the prompt during the production of the image.")
 
     advanced_settings.number_input(label="skip_steps:", min_value=0, max_value=300, value=0, key="skip_steps", help="This is the number of steps you skip ahead when starting a run.")
+
+    prompt_settings = left.expander("Prompt Settings", expanded=True)
+
+    # prompt_settings.button(label="Rerun Preview", on_click=preview_click_handler(st.session_state.name_docarray))
+
+    prompt_settings.button(label="Stop prompt", on_click=stop_click_handler)
 
     left.text("Current Image ID:")
     left.text(st.session_state.name_docarray)
