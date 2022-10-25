@@ -18,10 +18,10 @@ The following settings can be adjusted.
 
 # How to Setup
 
-Simply run the following command to use the built image
+Simply run the following command to use the pre-built image
 
 ```bash
-docker run -p 8501:8501 -e SERVER_LOCATION="<SERVER LOCATION>" streamlit
+docker run -p 8501:8501 -e SERVER_LOCATION="<SERVER LOCATION>" uetuluk/disco-diffusion-ui:latest
 ```
 
 Or follow the commands below to build and run yourself.
