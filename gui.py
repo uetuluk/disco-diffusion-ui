@@ -202,7 +202,6 @@ async def past_image_click_retrieve(name_docarray):
     if len(preview_response_array) > 0:
         latest_document = preview_response_array[-1]
         preview_image.image(image=latest_document.uri)
-        completed = latest_document.tags["_status"]["completed"] is True
 
 def past_image_click_handler(name_docarray):
     asyncio.run(past_image_click_retrieve(name_docarray))
