@@ -10,7 +10,7 @@ st.title('Disco Diffusion')
 # form = st.form("prompt_form")
 textinput_left, textinput_right = st.columns([10, 1])
 left, center, right = st.columns([1, 3, 1])
-[image_preview_tab] = center.tabs(["Image Preview"])
+[image_preview_tab, past_images_tab] = center.tabs(["Image Preview", "Past Images"])
 # image_preview_tab_container = image_preview_tab.container()
 
 # ENV Variables
@@ -191,7 +191,21 @@ def click_handler():
 #         if st.session_state.status == 'completed' or st.session_state.status == 'error':
 #             st.session_state.preview_task = preview_handler_wait()
 #             asyncio.run(st.session_state.preview_task)
+
+async def past_image_click_retrieve(name_docarray):
+    preview_image = past_images_tab.empty()
         
+    await preview_handler(name_docarray)
+    # print("current length: " + str(len(preview_response_array)))
+    # print("Waiting 1 second")
+    # Add the image to preview
+    if len(preview_response_array) > 0:
+        latest_document = preview_response_array[-1]
+        preview_image.image(image=latest_document.uri)
+        completed = latest_document.tags["_status"]["completed"] is True
+
+def past_image_click_handler(name_docarray):
+    asyncio.run(past_image_click_retrieve(name_docarray))
 
 async def stop_prompt_handler(name_docarray):
     async for resp in client.post(
@@ -276,6 +290,11 @@ def main():
         default=["ViT-B-32::openai","ViT-B-16::openai","RN50::openai"],
         key="clip_models")
     
+    # past_image = past_images_tab.empty()
+    # left_past_images_tab, right_past_images_tab = past_images_tab.columns([10,1])
+    
+    past_images_tab.text_input(label="Image ID", key="past_image_name_docarray", placeholder="mydisco-***")
+    past_images_tab.button(label="Load Past Image", on_click=past_image_click_handler, args=(st.session_state.past_image_name_docarray,))
     
 
 if __name__ == "__main__":
