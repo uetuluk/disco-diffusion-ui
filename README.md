@@ -18,7 +18,26 @@ The following settings can be adjusted.
 
 # How to Setup
 
-WIP
+Simply run the following command to use the built image
+
+```bash
+docker run -p 8501:8501 -e SERVER_LOCATION="<SERVER LOCATION>" streamlit
+```
+
+Or follow the commands below to build and run yourself.
+
+## Build Image
+
+```bash
+docker build -t streamlit .
+```
+
+## Run Image
+```bash
+docker run -p 8501:8501 -e SERVER_LOCATION="<SERVER LOCATION>" streamlit 
+```
+
+You can now view the UI at localhost:8501 or your-machine-ip:8501
 
 # Development Quickstart
 
