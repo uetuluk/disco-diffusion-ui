@@ -5,8 +5,8 @@ import asyncio
 from random import randint
 from yaml import Loader, load as load_yaml
 
-st.set_page_config(page_title="Disco Diffusion", page_icon="🎨", layout="wide")
-st.title('Disco Diffusion')
+st.set_page_config(page_title="Disco Diffusion UI", page_icon="🎨", layout="wide")
+st.title('Disco Diffusion UI')
 # form = st.form("prompt_form")
 textinput_left, textinput_right = st.columns([10, 1])
 left, center, right = st.columns([1, 3, 1])
