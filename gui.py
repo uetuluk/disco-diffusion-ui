@@ -108,18 +108,21 @@ async def preview_handler_wait():
     # preview_task = asyncio.create_task(preview_handler(st.session_state.name_docarray))
     # print("Running the preview handler wait loop")
     completed = False
+    image_preview_tab.text("Progress: ")
+    progress_bar = image_preview_tab.progress(0)
     preview_image = image_preview_tab.empty()
     while len(preview_response_array) < 1 or not completed:
         # print("Waiting for preview response")
-        await asyncio.sleep(1)
+        await asyncio.sleep(5)
         await preview_handler(st.session_state.name_docarray)
         # print("current length: " + str(len(preview_response_array)))
         # print("Waiting 1 second")
         # Add the image to preview
         if len(preview_response_array) > 0:
             latest_document = preview_response_array[-1]
+            progress_bar.progress((latest_document.tags["_status"]["step"] + 1) / st.session_state.steps)
             preview_image.image(image=latest_document.uri)
-            st.session_state.seed = str(latest_document.tags['seed'])
+            st.session_state["seed_record"] = str(int(latest_document.tags['seed']))
             completed = latest_document.tags["_status"]["completed"] is True
             st.session_state.status = 'completed'
 
@@ -152,7 +155,8 @@ async def prompt_handler():
         prompt_details = image_preview_tab.expander("Prompt Details", expanded=True)
 
         prompt_details.write("Prompt: " + st.session_state.text_prompts)
-        prompt_details.write("Seed: " + str(st.session_state.seed))
+        prompt_details.write("Image ID: " + st.session_state.name_docarray)
+        prompt_details.write("Seed: " + str(st.session_state.seed_record))
         prompt_details.write("Width: " + str(st.session_state.width))
         prompt_details.write("Height: " + str(st.session_state.height))
         prompt_details.write("Steps: " + str(st.session_state.steps))
