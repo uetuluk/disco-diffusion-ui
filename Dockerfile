@@ -5,6 +5,7 @@ EXPOSE 8501
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
+    curl \
     build-essential \
     software-properties-common \
     git \
