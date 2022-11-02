@@ -250,7 +250,7 @@ def main():
     textinput_left.text_input(label="Input Prompt", key="text_prompts", placeholder="A beautiful painting of a singular lighthouse, yellow color scheme")
     textinput_right.text("")
     textinput_right.text("")
-    textinput_right.button(label="Start", on_click=click_handler)
+    textinput_right.button(label="Start", on_click=click_handler, type="primary")
 
     left.number_input(label="Sampling Steps:", min_value=10, max_value=300, value=200, key="steps")
 
@@ -260,7 +260,7 @@ def main():
 
     left.text_input(label="Seed:", key="seed",  help="The seed to use, if left blank a random seed will be generated.")
     
-    advanced_settings = left.expander("Advanced Settings", expanded=False)
+    advanced_settings = left.expander("Advanced Settings", expanded=True)
 
     advanced_settings.number_input(label="cut_ic_pow:", min_value=0, max_value=100, value=1, key="cut_ic_pow", help="Higher Values = More Detail")
 
