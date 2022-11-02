@@ -13,6 +13,8 @@ textinput_left, textinput_right = st.columns([10, 1])
 left, center, right = st.columns([1, 3, 1])
 [image_preview_tab, past_images_tab] = center.tabs(["Image Preview", "Past Images"])
 # image_preview_tab_container = image_preview_tab.container()
+no_prompt_text_container = image_preview_tab.empty()
+no_prompt_text_container.warning("Nothing but crickets here, try generating something first.")
 
 # ENV Variables
 HOST_LOCATION = os.environ['SERVER_LOCATION']
@@ -64,7 +66,7 @@ async def disco_request(text_prompts: list, name_docarray: str):
     cut_icgray_p = st.session_state.get('cut_icgray_p', default = CUT_ICGRAY_P_DEFAULT)
 
     init_scale = st.session_state.get('init_scale', default = INIT_SCALE_DEFAULT)
-    init_image = st.session_state.get('init_image', default = '')
+    init_image = st.session_state.get('init_image', default = None)
 
     # clamp_max = st.session_state.clamp_max if ('clamp_max' not in st.session_state) else CLAMP_MAX_DEFAULT
     # clip_guidance_scale = st.session_state.clip_guidance_scale if ('clip_guidance_scale' not in st.session_state) else CLIP_GUIDANCE_SCALE_DEFAULT
@@ -104,7 +106,7 @@ async def disco_request(text_prompts: list, name_docarray: str):
     }
 
     # create the image
-    if init_image != '':
+    if init_image:
         init_image_uri = 'data:image/png;base64,' + base64.b64encode(init_image.getvalue()).decode('utf-8')
 
         init_document = Document(
@@ -179,6 +181,7 @@ async def preview_handler_wait():
     # preview_task = asyncio.create_task(preview_handler(st.session_state.name_docarray))
     # print("Running the preview handler wait loop")
     completed = False
+    no_prompt_text_container.empty()
     image_preview_tab.text("Progress: ")
     progress_bar = image_preview_tab.progress(0)
     preview_image = image_preview_tab.empty()
@@ -377,7 +380,7 @@ def main():
         key="clip_models")
 
     # Init Images
-    init_image = right.expander("Init Image:", expanded=True)
+    init_image = right.expander("Init Image:", expanded=False)
 
     init_image.file_uploader(label="Upload Image", type=["png", "jpg", "jpeg"], key="init_image")
 
