@@ -1,9 +1,10 @@
 import streamlit as st
-from jina import Client, Executor, requests, DocumentArray
+from jina import Client, Executor, requests, DocumentArray, Document
 import os
 import asyncio
 from random import randint
 from yaml import Loader, load as load_yaml
+import base64
 
 st.set_page_config(page_title="Disco Diffusion UI", page_icon="🎨", layout="wide")
 st.title('Disco Diffusion UI')
@@ -76,35 +77,57 @@ async def disco_request(text_prompts: list, name_docarray: str):
     # cut_innercut = st.session_state.cut_innercut if ('cut_innercut' not in st.session_state) else CUT_INNERCUT_DEFAULT
     # cut_icgray_p = st.session_state.cut_icgray_p if ('cut_icgray_p' not in st.session_state) else CUT_ICGRAY_P_DEFAULT
 
-    async for resp in client.post(
-        '/create',
-        parameters={
-            'name_docarray': name_docarray,
-            'text_prompts': text_prompts,
-            'batch_size': 1,
-            'cutn_batches': cutn_batches,
-            'tv_scale': tv_scale,
-            'range_scale': range_scale,
-            'sat_scale': sat_scale,
-            'n_batches': 1,
-            'seed': st.session_state.seed,
-            'steps': st.session_state.steps,
-            'width_height': [st.session_state.width, st.session_state.height],
-            'diffusion_model': st.session_state.diffusion_model,
-            'clip_models': st.session_state.clip_models,
-            'use_secondary_model': st.session_state.use_secondary_model,
-            'clip_guidance_scale': clip_guidance_scale,
-            'init_scale': init_scale,
-            'init_image': init_image,
-            'cut_overview': cut_overview,
-            'cut_innercut': cut_innercut,
-            'cut_icgray_p': cut_icgray_p,
-            'cut_ic_pow': cut_ic_pow,
-            'clamp_max': clamp_max,
-            'skip_steps': skip_steps,
-        },
-    ):
-        create_response_array.append(resp)
+    # setup parameters
+    parameters = {
+        'name_docarray': name_docarray,
+        'text_prompts': text_prompts,
+        'batch_size': 1,
+        'cutn_batches': cutn_batches,
+        'tv_scale': tv_scale,
+        'range_scale': range_scale,
+        'sat_scale': sat_scale,
+        'n_batches': 1,
+        'seed': st.session_state.seed,
+        'steps': st.session_state.steps,
+        'width_height': [st.session_state.width, st.session_state.height],
+        'diffusion_model': st.session_state.diffusion_model,
+        'clip_models': st.session_state.clip_models,
+        'use_secondary_model': st.session_state.use_secondary_model,
+        'clip_guidance_scale': clip_guidance_scale,
+        'init_scale': init_scale,
+        'cut_overview': cut_overview,
+        'cut_innercut': cut_innercut,
+        'cut_icgray_p': cut_icgray_p,
+        'cut_ic_pow': cut_ic_pow,
+        'clamp_max': clamp_max,
+        'skip_steps': skip_steps,
+    }
+
+    # create the image
+    if init_image != '':
+        init_image_uri = 'data:image/png;base64,' + base64.b64encode(init_image.getvalue()).decode('utf-8')
+
+        init_document = Document(
+            mime_type='image/png',
+            uri=init_image_uri,
+        )
+        print(init_document.summary())
+
+        async for resp in client.post(
+            '/create',
+            init_document,
+            parameters=parameters,
+        ):
+            create_response_array.append(resp)
+    else:
+        async for resp in client.post(
+            '/create',
+            parameters=parameters,
+        ):
+            create_response_array.append(resp)
+    
+
+    
 
 # def blocking_disco_request(text_prompts: list, name_docarray: str):
 
@@ -168,7 +191,7 @@ async def preview_handler_wait():
         # Add the image to preview
         if len(preview_response_array) > 0:
             latest_document = preview_response_array[-1]
-            progress_bar.progress((latest_document.tags["_status"]["step"] + 1) / st.session_state.steps)
+            progress_bar.progress((st.session_state.get('skip_steps', default = SKIP_STEPS_DEFAULT) + latest_document.tags["_status"]["step"] + 1) / st.session_state.steps)
             preview_image.image(image=latest_document.uri)
             st.session_state["seed_record"] = str(int(latest_document.tags['seed']))
             completed = latest_document.tags["_status"]["completed"] is True
@@ -208,7 +231,7 @@ async def prompt_handler():
         prompt_details.write("Width: " + str(st.session_state.width))
         prompt_details.write("Height: " + str(st.session_state.height))
         prompt_details.write("Steps: " + str(st.session_state.steps))
-        prompt_details.write("Clip Guidance Scale: " + str(st.session_state.clip_guidance_scale))
+        # prompt_details.write("Clip Guidance Scale: " + str(st.session_state.clip_guidance_scale))
 
     # done, pending = await asyncio.wait({create_task})
 
