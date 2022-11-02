@@ -46,6 +46,8 @@ CUT_OVERVIEW_DEFAULT = "[12]*400+[4]*600"
 CUT_INNERCUT_DEFAULT = "[4]*400+[12]*600"
 CUT_ICGRAY_P_DEFAULT = "[0.2]*400+[0]*600"
 
+INIT_SCALE_DEFAULT = 1000
+
 async def disco_request(text_prompts: list, name_docarray: str):
 
     cut_ic_pow = st.session_state.get('cut_ic_pow', default = CUT_IC_POW_DEFAULT)
@@ -59,6 +61,9 @@ async def disco_request(text_prompts: list, name_docarray: str):
     cut_overview = st.session_state.get('cut_overview', default = CUT_OVERVIEW_DEFAULT)
     cut_innercut = st.session_state.get('cut_innercut', default = CUT_INNERCUT_DEFAULT)
     cut_icgray_p = st.session_state.get('cut_icgray_p', default = CUT_ICGRAY_P_DEFAULT)
+
+    init_scale = st.session_state.get('init_scale', default = INIT_SCALE_DEFAULT)
+    init_image = st.session_state.get('init_image', default = '')
 
     # clamp_max = st.session_state.clamp_max if ('clamp_max' not in st.session_state) else CLAMP_MAX_DEFAULT
     # clip_guidance_scale = st.session_state.clip_guidance_scale if ('clip_guidance_scale' not in st.session_state) else CLIP_GUIDANCE_SCALE_DEFAULT
@@ -89,6 +94,8 @@ async def disco_request(text_prompts: list, name_docarray: str):
             'clip_models': st.session_state.clip_models,
             'use_secondary_model': st.session_state.use_secondary_model,
             'clip_guidance_scale': clip_guidance_scale,
+            'init_scale': init_scale,
+            'init_image': init_image,
             'cut_overview': cut_overview,
             'cut_innercut': cut_innercut,
             'cut_icgray_p': cut_icgray_p,
@@ -321,7 +328,7 @@ def main():
 
     advanced_settings.number_input(label="clip_guidance_scale:", min_value=0, max_value=500000, value=CLIP_GUIDANCE_SCALE_DEFAULT, key="clip_guidance_scale", help="This parameter guides how much Disco stays true to the prompt during the production of the image.")
 
-    advanced_settings.number_input(label="skip_steps:", min_value=0, max_value=300, value=SKIP_STEPS_DEFAULT, key="skip_steps", help="This is the number of steps you skip ahead when starting a run.")
+    # advanced_settings.number_input(label="skip_steps:", min_value=0, max_value=300, value=SKIP_STEPS_DEFAULT, key="skip_steps", help="This is the number of steps you skip ahead when starting a run.")
 
     prompt_settings = left.expander("Prompt Settings", expanded=True)
 
@@ -345,7 +352,16 @@ def main():
         options=CLIP_MODELS,
         default=["ViT-B-32::openai","ViT-B-16::openai","RN50::openai"],
         key="clip_models")
+
+    # Init Images
+    init_image = right.expander("Init Image:", expanded=True)
+
+    init_image.file_uploader(label="Upload Image", type=["png", "jpg", "jpeg"], key="init_image")
+
+    init_image.number_input(label="skip_steps:", min_value=0, max_value=300, value=SKIP_STEPS_DEFAULT, key="skip_steps", help="This is the number of steps you skip ahead when starting a run.")
     
+    init_image.number_input(label="init_scale:", min_value=0, max_value=1000, value=INIT_SCALE_DEFAULT, key="init_scale")
+
     # past_image = past_images_tab.empty()
     # left_past_images_tab, right_past_images_tab = past_images_tab.columns([10,1])
     
