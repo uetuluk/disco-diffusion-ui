@@ -34,7 +34,17 @@ create_response_array = []
 
 # Default for session state advanced settings
 
+CUT_IC_POW_DEFAULT = 1
+CLAMP_MAX_DEFAULT = 0.05
+CLIP_GUIDANCE_SCALE_DEFAULT = 5000
+SKIP_STEPS_DEFAULT = 0
+
 async def disco_request(text_prompts: list, name_docarray: str):
+
+    cut_ic_pow = st.session_state.cut_ic_pow if ('cut_ic_pow' not in st.session_state) else CUT_IC_POW_DEFAULT
+    clamp_max = st.session_state.clamp_max if ('clamp_max' not in st.session_state) else CLAMP_MAX_DEFAULT
+    clip_guidance_scale = st.session_state.clip_guidance_scale if ('clip_guidance_scale' not in st.session_state) else CLIP_GUIDANCE_SCALE_DEFAULT
+    skip_steps = st.session_state.skip_steps if ('skip_steps' not in st.session_state) else SKIP_STEPS_DEFAULT
 
     async for resp in client.post(
         '/create',
@@ -50,10 +60,10 @@ async def disco_request(text_prompts: list, name_docarray: str):
             'diffusion_model': st.session_state.diffusion_model,
             'clip_models': st.session_state.clip_models,
             'use_secondary_model': st.session_state.use_secondary_model,
-            'clip_guidance_scale': st.session_state.clip_guidance_scale,
-            'cut_ic_pow': st.session_state.cut_ic_pow,
-            'clamp_max': st.session_state.clamp_max,
-            'skip_steps': st.session_state.skip_steps,
+            'clip_guidance_scale': clip_guidance_scale,
+            'cut_ic_pow': cut_ic_pow,
+            'clamp_max': clamp_max,
+            'skip_steps': skip_steps,
         },
     ):
         create_response_array.append(resp)
@@ -262,13 +272,13 @@ def main():
     
     advanced_settings = left.expander("Advanced Settings", expanded=True)
 
-    advanced_settings.number_input(label="cut_ic_pow:", min_value=0, max_value=100, value=1, key="cut_ic_pow", help="Higher Values = More Detail")
+    advanced_settings.number_input(label="cut_ic_pow:", min_value=0, max_value=CUT_IC_POW_DEFAULT, value=1, key="cut_ic_pow", help="Higher Values = More Detail")
 
-    advanced_settings.number_input(label="clamp_max:", min_value=0.0, max_value=1.0, value=0.05, key="clamp_max", help="Increasing this value helps with saturation, increased contrast, and detail.")
+    advanced_settings.number_input(label="clamp_max:", min_value=0.0, max_value=1.0, value=CLAMP_MAX_DEFAULT, key="clamp_max", help="Increasing this value helps with saturation, increased contrast, and detail.")
 
-    advanced_settings.number_input(label="clip_guidance_scale:", min_value=0, max_value=500000, value=5000, key="clip_guidance_scale", help="This parameter guides how much Disco stays true to the prompt during the production of the image.")
+    advanced_settings.number_input(label="clip_guidance_scale:", min_value=0, max_value=500000, value=CLIP_GUIDANCE_SCALE_DEFAULT, key="clip_guidance_scale", help="This parameter guides how much Disco stays true to the prompt during the production of the image.")
 
-    advanced_settings.number_input(label="skip_steps:", min_value=0, max_value=300, value=0, key="skip_steps", help="This is the number of steps you skip ahead when starting a run.")
+    advanced_settings.number_input(label="skip_steps:", min_value=0, max_value=300, value=SKIP_STEPS_DEFAULT, key="skip_steps", help="This is the number of steps you skip ahead when starting a run.")
 
     prompt_settings = left.expander("Prompt Settings", expanded=True)
 
