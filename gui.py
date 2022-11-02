@@ -38,13 +38,38 @@ CUT_IC_POW_DEFAULT = 1
 CLAMP_MAX_DEFAULT = 0.05
 CLIP_GUIDANCE_SCALE_DEFAULT = 5000
 SKIP_STEPS_DEFAULT = 0
+TV_SCALE_DEFAULT = 0
+RANGE_SCALE_DEFAULT = 150
+SAT_SCALE_DEFAULT = 0
+CUTN_BATCHES_DEFAULT = 1
+CUT_OVERVIEW_DEFAULT = "[12]*400+[4]*600"
+CUT_INNERCUT_DEFAULT = "[4]*400+[12]*600"
+CUT_ICGRAY_P_DEFAULT = "[0.2]*400+[0]*600"
 
 async def disco_request(text_prompts: list, name_docarray: str):
 
-    cut_ic_pow = st.session_state.cut_ic_pow if ('cut_ic_pow' not in st.session_state) else CUT_IC_POW_DEFAULT
-    clamp_max = st.session_state.clamp_max if ('clamp_max' not in st.session_state) else CLAMP_MAX_DEFAULT
-    clip_guidance_scale = st.session_state.clip_guidance_scale if ('clip_guidance_scale' not in st.session_state) else CLIP_GUIDANCE_SCALE_DEFAULT
-    skip_steps = st.session_state.skip_steps if ('skip_steps' not in st.session_state) else SKIP_STEPS_DEFAULT
+    cut_ic_pow = st.session_state.get('cut_ic_pow', default = CUT_IC_POW_DEFAULT)
+    clamp_max = st.session_state.get('clamp_max', default = CLAMP_MAX_DEFAULT)
+    clip_guidance_scale = st.session_state.get('clip_guidance_scale', default = CLIP_GUIDANCE_SCALE_DEFAULT)
+    skip_steps = st.session_state.get('skip_steps', default = SKIP_STEPS_DEFAULT)
+    tv_scale = st.session_state.get('tv_scale', default = TV_SCALE_DEFAULT)
+    range_scale = st.session_state.get('range_scale', default = RANGE_SCALE_DEFAULT)
+    sat_scale = st.session_state.get('sat_scale', default = SAT_SCALE_DEFAULT)
+    cutn_batches = st.session_state.get('cutn_batches', default = CUTN_BATCHES_DEFAULT)
+    cut_overview = st.session_state.get('cut_overview', default = CUT_OVERVIEW_DEFAULT)
+    cut_innercut = st.session_state.get('cut_innercut', default = CUT_INNERCUT_DEFAULT)
+    cut_icgray_p = st.session_state.get('cut_icgray_p', default = CUT_ICGRAY_P_DEFAULT)
+
+    # clamp_max = st.session_state.clamp_max if ('clamp_max' not in st.session_state) else CLAMP_MAX_DEFAULT
+    # clip_guidance_scale = st.session_state.clip_guidance_scale if ('clip_guidance_scale' not in st.session_state) else CLIP_GUIDANCE_SCALE_DEFAULT
+    # skip_steps = st.session_state.skip_steps if ('skip_steps' not in st.session_state) else SKIP_STEPS_DEFAULT
+    # tv_scale = st.session_state.tv_scale if ('tv_scale' not in st.session_state) else TV_SCALE_DEFAULT
+    # range_scale = st.session_state.range_scale if ('range_scale' not in st.session_state) else RANGE_SCALE_DEFAULT
+    # sat_scale = st.session_state.sat_scale if ('sat_scale' not in st.session_state) else SAT_SCALE_DEFAULT
+    # cutn_batches = st.session_state.cutn_batches if ('cutn_batches' not in st.session_state) else CUTN_BATCHES_DEFAULT
+    # cut_overview = st.session_state.cut_overview if ('cut_overview' not in st.session_state) else CUT_OVERVIEW_DEFAULT
+    # cut_innercut = st.session_state.cut_innercut if ('cut_innercut' not in st.session_state) else CUT_INNERCUT_DEFAULT
+    # cut_icgray_p = st.session_state.cut_icgray_p if ('cut_icgray_p' not in st.session_state) else CUT_ICGRAY_P_DEFAULT
 
     async for resp in client.post(
         '/create',
@@ -52,7 +77,10 @@ async def disco_request(text_prompts: list, name_docarray: str):
             'name_docarray': name_docarray,
             'text_prompts': text_prompts,
             'batch_size': 1,
-            'cutn_batches': 1,
+            'cutn_batches': cutn_batches,
+            'tv_scale': tv_scale,
+            'range_scale': range_scale,
+            'sat_scale': sat_scale,
             'n_batches': 1,
             'seed': st.session_state.seed,
             'steps': st.session_state.steps,
@@ -61,6 +89,9 @@ async def disco_request(text_prompts: list, name_docarray: str):
             'clip_models': st.session_state.clip_models,
             'use_secondary_model': st.session_state.use_secondary_model,
             'clip_guidance_scale': clip_guidance_scale,
+            'cut_overview': cut_overview,
+            'cut_innercut': cut_innercut,
+            'cut_icgray_p': cut_icgray_p,
             'cut_ic_pow': cut_ic_pow,
             'clamp_max': clamp_max,
             'skip_steps': skip_steps,
@@ -185,11 +216,11 @@ async def prompt_handler():
     #     print("Pending once")
 
 def click_handler():
-    if st.session_state.text_prompts == "":
+    if st.session_state.get('text_prompts', default = '') == "":
         textinput_left.error("Please input a prompt")
         # text_input.help = "Please input a prompt"
         return
-    if st.session_state.skip_steps > st.session_state.steps:
+    if st.session_state.get('skip_steps', default = 0) > st.session_state.steps:
         textinput_left.error("Skip steps cannot be greater than steps")
         return
     
@@ -270,7 +301,19 @@ def main():
 
     left.text_input(label="Seed:", key="seed",  help="The seed to use, if left blank a random seed will be generated.")
     
-    advanced_settings = left.expander("Advanced Settings", expanded=True)
+    advanced_settings = left.expander("Advanced Settings", expanded=False)
+
+    advanced_settings.number_input(label="tv_scale:", min_value=0, max_value=500000, value=TV_SCALE_DEFAULT, key="tv_scale")
+
+    advanced_settings.number_input(label="sat_scale:", min_value=0, max_value=500000, value=SAT_SCALE_DEFAULT, key="sat_scale")
+
+    advanced_settings.number_input(label="cutn_batches:", min_value=1, max_value=16, value=CUTN_BATCHES_DEFAULT, key="cutn_batches")
+
+    advanced_settings.text_input(label="cut_overview:", value=CUT_OVERVIEW_DEFAULT, key="cut_overview")
+
+    advanced_settings.text_input(label="cut_innercut:", value=CUT_INNERCUT_DEFAULT, key="cut_innercut")
+
+    advanced_settings.text_input(label="cut_icgray_p", value=CUT_ICGRAY_P_DEFAULT, key="cut_icgray_p")
 
     advanced_settings.number_input(label="cut_ic_pow:", min_value=0, max_value=CUT_IC_POW_DEFAULT, value=1, key="cut_ic_pow", help="Higher Values = More Detail")
 
