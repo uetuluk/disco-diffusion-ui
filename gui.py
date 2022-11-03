@@ -54,6 +54,7 @@ CUTN_BATCHES_DEFAULT = 1
 CUT_OVERVIEW_DEFAULT = "[12]*400+[4]*600"
 CUT_INNERCUT_DEFAULT = "[4]*400+[12]*600"
 CUT_ICGRAY_P_DEFAULT = "[0.2]*400+[0]*600"
+ETA_DEFAULT = 0.8
 
 INIT_SCALE_DEFAULT = 1000
 
@@ -70,6 +71,7 @@ async def disco_request(text_prompts: list, name_docarray: str):
     cut_overview = st.session_state.get('cut_overview', default = CUT_OVERVIEW_DEFAULT)
     cut_innercut = st.session_state.get('cut_innercut', default = CUT_INNERCUT_DEFAULT)
     cut_icgray_p = st.session_state.get('cut_icgray_p', default = CUT_ICGRAY_P_DEFAULT)
+    eta = st.session_state.get('eta', default = ETA_DEFAULT)
 
     init_scale = st.session_state.get('init_scale', default = INIT_SCALE_DEFAULT)
     init_image = st.session_state.get('init_image', default = None)
@@ -112,6 +114,7 @@ async def disco_request(text_prompts: list, name_docarray: str):
         'clamp_max': clamp_max,
         'skip_steps': skip_steps,
         'save_rate': save_rate,
+        'eta': eta,
     }
 
     # create the image
@@ -406,6 +409,8 @@ def main():
     advanced_settings.number_input(label="clamp_max:", min_value=0.0, max_value=1.0, value=CLAMP_MAX_DEFAULT, key="clamp_max", help="Increasing this value helps with saturation, increased contrast, and detail.")
 
     advanced_settings.number_input(label="clip_guidance_scale:", min_value=0, max_value=500000, value=CLIP_GUIDANCE_SCALE_DEFAULT, key="clip_guidance_scale", help="This parameter guides how much Disco stays true to the prompt during the production of the image.")
+
+    advanced_settings.number_input(label="eta:", min_value=0.0, max_value=1.0, value=ETA_DEFAULT, key="eta")
 
     # advanced_settings.number_input(label="skip_steps:", min_value=0, max_value=300, value=SKIP_STEPS_DEFAULT, key="skip_steps", help="This is the number of steps you skip ahead when starting a run.")
 
