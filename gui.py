@@ -5,6 +5,8 @@ import asyncio
 from random import randint
 from yaml import Loader, load as load_yaml
 import base64
+from io import BytesIO
+from PIL import Image
 
 st.set_page_config(page_title="Disco Diffusion UI", page_icon="🎨", layout="wide")
 st.title('Disco Diffusion UI')
@@ -36,6 +38,9 @@ client = Client(host=HOST_LOCATION, asyncio=True)
 create_response_array = []
 
 # Default for session state advanced settings
+
+STEPS_DEFAULT = 200
+GIF_FPS_DEFAULT = 20
 
 CUT_IC_POW_DEFAULT = 1
 CLAMP_MAX_DEFAULT = 0.05
@@ -236,6 +241,35 @@ async def prompt_handler():
         prompt_details.write("Steps: " + str(st.session_state.steps))
         # prompt_details.write("Clip Guidance Scale: " + str(st.session_state.clip_guidance_scale))
 
+        progress_gif_container = image_preview_tab.expander("Progress GIF", expanded=True)
+        # create the gif
+        # Create the images
+        progress_gif_slides = []
+        for chunk in preview_response_array[-1].chunks:
+            chunk.load_uri_to_blob()
+            progress_gif_slides.append(Image.open(BytesIO(chunk.content)))
+        
+        # Convert images to gif
+        progress_gif_iterator = iter(progress_gif_slides)
+        progress_gif_iterator_first = next(progress_gif_iterator)
+
+        progress_gif_buffer = BytesIO()
+        
+        progress_gif_iterator_first.save(
+            fp=progress_gif_buffer,
+            format='GIF',
+            append_images=progress_gif_iterator,
+            save_all=True,
+            duration=(st.session_state.get('steps', default=STEPS_DEFAULT) * 5) // st.session_state.get('gif_fps', default=GIF_FPS_DEFAULT),
+            loop=0,
+        )
+        progress_gif = 'data:image/gif;base64,' + base64.b64encode(progress_gif_buffer.getvalue()).decode('utf-8')        
+
+        progress_gif_container.image(progress_gif)
+
+
+
+
     # done, pending = await asyncio.wait({create_task})
 
     # while create_task in pending:
@@ -253,7 +287,7 @@ def click_handler():
         textinput_left.error("Please input a prompt")
         # text_input.help = "Please input a prompt"
         return
-    if st.session_state.get('skip_steps', default = 0) > st.session_state.steps:
+    if st.session_state.get('skip_steps', default = SKIP_STEPS_DEFAULT) > st.session_state.get('steps', default=STEPS_DEFAULT):
         textinput_left.error("Skip steps cannot be greater than steps")
         return
     
@@ -326,7 +360,7 @@ def main():
     textinput_right.text("")
     textinput_right.button(label="Start", on_click=click_handler, type="primary")
 
-    left.number_input(label="Sampling Steps:", min_value=10, max_value=300, value=200, key="steps")
+    left.number_input(label="Sampling Steps:", min_value=10, max_value=300, value=STEPS_DEFAULT, key="steps")
 
     left.number_input(label="Width:", min_value=100, max_value=1024, value=500, key="width")
 
@@ -387,6 +421,11 @@ def main():
     init_image.number_input(label="skip_steps:", min_value=0, max_value=300, value=SKIP_STEPS_DEFAULT, key="skip_steps", help="This is the number of steps you skip ahead when starting a run.")
     
     init_image.number_input(label="init_scale:", min_value=0, max_value=1000, value=INIT_SCALE_DEFAULT, key="init_scale")
+
+    # GIF Settings
+    gif_settings = right.expander("GIF Settings:", expanded=False)
+
+    gif_settings.number_input(label="GIF FPS:", min_value=10, max_value=60, value=GIF_FPS_DEFAULT, key="gif_fps")
 
     # past_image = past_images_tab.empty()
     # left_past_images_tab, right_past_images_tab = past_images_tab.columns([10,1])
