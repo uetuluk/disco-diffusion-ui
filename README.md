@@ -15,6 +15,17 @@ The following settings can be adjusted.
 * Maximum Clamp - `clamp_max`
 * cut_ic_pow
 * Clip Models - `clip_models`
+* init_scale
+* tv_scale
+* range_scale
+* sat_scale
+* cutn_batches
+* cut_overview
+* cut_innercut
+* cut_icgray_p
+* eta
+
+Additionally, the UI supports initial images and generated GIF of the progress. 
 
 # How to Setup
 
