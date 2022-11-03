@@ -404,7 +404,7 @@ def main():
 
     advanced_settings.text_input(label="cut_icgray_p", value=CUT_ICGRAY_P_DEFAULT, key="cut_icgray_p")
 
-    advanced_settings.number_input(label="cut_ic_pow:", min_value=0, max_value=CUT_IC_POW_DEFAULT, value=1, key="cut_ic_pow", help="Higher Values = More Detail")
+    advanced_settings.number_input(label="cut_ic_pow:", min_value=0, max_value=100, value=CUT_IC_POW_DEFAULT, key="cut_ic_pow", help="Higher Values = More Detail")
 
     advanced_settings.number_input(label="clamp_max:", min_value=0.0, max_value=1.0, value=CLAMP_MAX_DEFAULT, key="clamp_max", help="Increasing this value helps with saturation, increased contrast, and detail.")
 
