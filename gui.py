@@ -6,7 +6,7 @@ from random import randint
 from yaml import Loader, load as load_yaml
 import base64
 from io import BytesIO
-from PIL import Image
+from PIL import Image, ImageDraw
 
 st.set_page_config(page_title="Disco Diffusion UI", page_icon="🎨", layout="wide")
 st.title('Disco Diffusion UI')
@@ -41,6 +41,7 @@ create_response_array = []
 
 STEPS_DEFAULT = 200
 GIF_FPS_DEFAULT = 20
+SAVE_RATE_DEFAULT = 20
 
 CUT_IC_POW_DEFAULT = 1
 CLAMP_MAX_DEFAULT = 0.05
@@ -72,6 +73,8 @@ async def disco_request(text_prompts: list, name_docarray: str):
 
     init_scale = st.session_state.get('init_scale', default = INIT_SCALE_DEFAULT)
     init_image = st.session_state.get('init_image', default = None)
+
+    save_rate = st.session_state.get('save_rate', default = SAVE_RATE_DEFAULT)
 
     # clamp_max = st.session_state.clamp_max if ('clamp_max' not in st.session_state) else CLAMP_MAX_DEFAULT
     # clip_guidance_scale = st.session_state.clip_guidance_scale if ('clip_guidance_scale' not in st.session_state) else CLIP_GUIDANCE_SCALE_DEFAULT
@@ -108,6 +111,7 @@ async def disco_request(text_prompts: list, name_docarray: str):
         'cut_ic_pow': cut_ic_pow,
         'clamp_max': clamp_max,
         'skip_steps': skip_steps,
+        'save_rate': save_rate,
     }
 
     # create the image
@@ -205,6 +209,34 @@ async def preview_handler_wait():
             completed = latest_document.tags["_status"]["completed"] is True
             st.session_state.status = 'completed'
 
+def gif_generator(image_docarray: list()):
+    progress_gif_slides = []
+    for chunk_index, chunk in enumerate(image_docarray[-1].chunks):
+        chunk.load_uri_to_blob()
+
+        # Add ID to the image
+        image = Image.open(BytesIO(chunk.content))
+        draw = ImageDraw.Draw(image)
+        draw.text((0, 0), str(chunk_index), (255, 255, 255))
+
+        progress_gif_slides.append(image)
+    
+    # Convert images to gif
+    progress_gif_iterator = iter(progress_gif_slides)
+    progress_gif_iterator_first = next(progress_gif_iterator)
+
+    progress_gif_buffer = BytesIO()
+    
+    progress_gif_iterator_first.save(
+        fp=progress_gif_buffer,
+        format='GIF',
+        append_images=progress_gif_iterator,
+        save_all=True,
+        duration=(st.session_state.get('steps', default=STEPS_DEFAULT) * 8) // st.session_state.get('gif_fps', default=GIF_FPS_DEFAULT),
+        loop=0,
+    )
+    progress_gif = 'data:image/gif;base64,' + base64.b64encode(progress_gif_buffer.getvalue()).decode('utf-8')
+    return progress_gif 
 
 async def prompt_handler():
     text_prompt_array = st.session_state.text_prompts.split(",")
@@ -244,26 +276,7 @@ async def prompt_handler():
         progress_gif_container = image_preview_tab.expander("Progress GIF", expanded=True)
         # create the gif
         # Create the images
-        progress_gif_slides = []
-        for chunk in preview_response_array[-1].chunks:
-            chunk.load_uri_to_blob()
-            progress_gif_slides.append(Image.open(BytesIO(chunk.content)))
-        
-        # Convert images to gif
-        progress_gif_iterator = iter(progress_gif_slides)
-        progress_gif_iterator_first = next(progress_gif_iterator)
-
-        progress_gif_buffer = BytesIO()
-        
-        progress_gif_iterator_first.save(
-            fp=progress_gif_buffer,
-            format='GIF',
-            append_images=progress_gif_iterator,
-            save_all=True,
-            duration=(st.session_state.get('steps', default=STEPS_DEFAULT) * 5) // st.session_state.get('gif_fps', default=GIF_FPS_DEFAULT),
-            loop=0,
-        )
-        progress_gif = 'data:image/gif;base64,' + base64.b64encode(progress_gif_buffer.getvalue()).decode('utf-8')        
+        progress_gif = gif_generator(preview_response_array)
 
         progress_gif_container.image(progress_gif)
 
@@ -314,6 +327,12 @@ async def past_image_click_retrieve(name_docarray):
     if len(preview_response_array) > 0:
         latest_document = preview_response_array[-1]
         preview_image.image(image=latest_document.uri)
+    
+        progress_gif_container = past_images_tab.expander("Progress GIF", expanded=True)
+
+        progress_gif = gif_generator(preview_response_array)
+
+        progress_gif_container.image(progress_gif)
 
 def past_image_click_handler(name_docarray):
     asyncio.run(past_image_click_retrieve(name_docarray))
@@ -426,6 +445,10 @@ def main():
     gif_settings = right.expander("GIF Settings:", expanded=False)
 
     gif_settings.number_input(label="GIF FPS:", min_value=10, max_value=60, value=GIF_FPS_DEFAULT, key="gif_fps")
+
+    save_rate_maximum = st.session_state.get('steps', default = STEPS_DEFAULT) - st.session_state.get('skip_steps', default = SKIP_STEPS_DEFAULT)
+
+    gif_settings.number_input(label="Save Rate:", min_value=1, max_value=save_rate_maximum, value=SAVE_RATE_DEFAULT, key="save_rate")
 
     # past_image = past_images_tab.empty()
     # left_past_images_tab, right_past_images_tab = past_images_tab.columns([10,1])
