@@ -11,6 +11,9 @@ from PIL import Image, ImageDraw
 st.set_page_config(page_title="Disco Diffusion UI", page_icon="🎨", layout="wide")
 st.title('Disco Diffusion UI')
 # form = st.form("prompt_form")
+
+st.info('You can learn how to use this UI here: https://uetuluk.github.io/disco-diffusion-ui/Guide', icon="ℹ️")
+
 textinput_left, textinput_right = st.columns([10, 1])
 left, center, right = st.columns([1, 3, 1])
 [image_preview_tab, past_images_tab] = center.tabs(["Image Preview", "Past Images"])
