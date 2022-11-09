@@ -40,7 +40,7 @@ create_response_array = []
 # Default for session state advanced settings
 
 STEPS_DEFAULT = 200
-GIF_FPS_DEFAULT = 20
+GIF_FPS_DEFAULT = 10
 SAVE_RATE_DEFAULT = 20
 
 CUT_IC_POW_DEFAULT = 1
