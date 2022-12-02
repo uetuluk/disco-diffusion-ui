@@ -35,6 +35,14 @@ Simply run the following command to use the pre-built image
 docker run -p 8501:8501 -e SERVER_LOCATION="<SERVER LOCATION>" uetuluk/disco-diffusion-ui:latest
 ```
 
+## Custom Model
+
+You can use the following command to use your custom model, [check the Guide.md for more details](https://uetuluk.github.io/disco-diffusion-ui/Guide#custom-models).
+
+```bash
+docker run -p 8501:8501 -e SERVER_LOCATION="<SERVER LOCATION>" -e CUSTOM_MODELS='true' -v "$(pwd)"/models.yml:/app/models.private.yml:ro  uetuluk/disco-diffusion-ui:latest
+```
+
 Or follow the commands below to build and run yourself.
 
 ## Build Image

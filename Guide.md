@@ -26,6 +26,10 @@ This guide will go through the basics of using the Disco Diffusion UI [hosted on
   - [Model Settings](#model-settings)
   - [Initial Image](#initial-image)
   - [GIF Settings](#gif-settings)
+  - [Custom Models](#custom-models)
+    - [Diffusion Model Format](#diffusion-model-format)
+    - [Discoart Setup](#discoart-setup)
+    - [Disco Diffusion UI](#disco-diffusion-ui)
 - [Further Reading](#further-reading)
 
 # Introduction
@@ -191,6 +195,67 @@ The `Init Image` is used to upload the initial image. You can also adjust the fo
 The FPS of the generated GIF and the step recording rate can be adjusted here. Changes to these parameters will affect the resulting progress GIF. 
 
 ![GIF Settings](images/gif_settings.png)
+
+## Custom Models
+
+You will need to setup your Discoart to use your custom diffusion model first.
+
+### Diffusion Model Format
+
+The diffusion model definition should follow the example below to be compatible. 
+
+You should use downloadable links for the .pt files.
+
+```yaml
+256x256_diffusion_uncond:
+  sha: a37c32fffd316cd494cf3f35b339936debdc1576dad13fe57c42399a5dbc78b1
+  sources:
+    - https://clip-as-service.s3.us-east-2.amazonaws.com/discoart/256x256_diffusion_uncond.pt
+    - https://openaipublic.blob.core.windows.net/diffusion/jul-2021/256x256_diffusion_uncond.pt
+    - https://www.dropbox.com/s/9tqnqo930mpnpcn/256x256_diffusion_uncond.pt
+  recommended_size: [ 512, 448 ]
+  config:
+    attention_resolutions: '32, 16, 8'
+    class_cond: false
+    diffusion_steps: 1000
+    image_size: 256
+    learn_sigma: true
+    noise_schedule: linear
+    num_channels: 256
+    num_head_channels: 64
+    num_res_blocks: 2
+    resblock_updown: true
+    rescale_timesteps: true
+    timestep_respacing: 250
+    use_scale_shift_norm: true
+```
+
+The required parameters are located in the [Discoart repository README](https://github.com/jina-ai/discoart#environment-variables).
+
+### Discoart Setup
+You should set the following environment variables and the following volume bind.
+
+`docker-compose.yml`
+```yaml
+    environment:
+      DISCOART_MODELS_YAML: "/etc/discoart/models.yml"
+      DISCOART_DISABLE_REMOTE_MODELS: '1'
+    volumes:
+      - <PWD>/discoart/models.yml:/etc/discoart/models.yml:ro
+```
+
+`docker command`
+```bash
+docker run --entrypoint "python" -p 51001:51001 -v $(pwd):/home/jovyan/ -v $HOME/.cache:/root/.cache -v $(pwd)/models.yml:/etc/discoart/models.yml:ro -e DISCOART_MODELS_YAML="/etc/discoart/models.yml" -e=DISCOART_DISABLE_REMOTE_MODELS '1' --gpus all jinaai/discoart -m discoart serve
+```
+
+### Disco Diffusion UI
+
+After you setup Discoart to use your custom diffusion model, you can should create a `model.private.yml` file inside the Docker container to tell the UI about your models. You can simply use the same `models.yml` in the previous step after renaming it.
+
+```bash
+docker run -p 8501:8501 -e SERVER_LOCATION="<SERVER LOCATION>" -e CUSTOM_MODELS='true' -v "$(pwd)"/models.yml:/app/models.private.yml:ro  uetuluk/disco-diffusion-ui:latest
+```
 
 # Further Reading
 
