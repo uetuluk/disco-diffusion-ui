@@ -194,6 +194,8 @@ The `Init Image` is used to upload the initial image. You can also adjust the fo
 
 The FPS of the generated GIF and the step recording rate can be adjusted here. Changes to these parameters will affect the resulting progress GIF. 
 
+The first frame of the GIF is skipped to decrease the strobe effect, it can be placed back by unchecking the **Skip First Frame** and using the Past Images tab. 
+
 ![GIF Settings](images/gif_settings.png)
 
 ## Custom Models

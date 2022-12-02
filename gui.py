@@ -60,6 +60,7 @@ create_response_array = []
 STEPS_DEFAULT = 200
 GIF_FPS_DEFAULT = 10
 SAVE_RATE_DEFAULT = 20
+GIF_SKIP_FIRST_FRAME = True
 
 CUT_IC_POW_DEFAULT = 1
 CLAMP_MAX_DEFAULT = 0.05
@@ -233,6 +234,9 @@ async def preview_handler_wait():
 def gif_generator(image_docarray: list()):
     progress_gif_slides = []
     for chunk_index, chunk in enumerate(image_docarray[-1].chunks):
+        if st.session_state.get('gif_skip_first_frame', default = GIF_SKIP_FIRST_FRAME):
+            if chunk_index == 0:
+                continue
         chunk.load_uri_to_blob()
 
         # Add ID to the image
@@ -472,6 +476,8 @@ def main():
     save_rate_maximum = st.session_state.get('steps', default = STEPS_DEFAULT) - st.session_state.get('skip_steps', default = SKIP_STEPS_DEFAULT)
 
     gif_settings.number_input(label="Save Rate:", min_value=1, max_value=save_rate_maximum, value=SAVE_RATE_DEFAULT, key="save_rate")
+
+    gif_settings.checkbox(label="Skip First Frame", value=GIF_SKIP_FIRST_FRAME, key="gif_skip_first_frame")
 
     # past_image = past_images_tab.empty()
     # left_past_images_tab, right_past_images_tab = past_images_tab.columns([10,1])
