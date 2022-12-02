@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
 FROM base as app
 
 ENV SERVER_LOCATION='localhost:5000'
+ENV CUSTOM_MODELS='false'
 
 COPY . /app
 

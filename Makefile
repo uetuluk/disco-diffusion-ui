@@ -8,6 +8,9 @@ client: ## access client
 gui: ## Run Streamlit
 	SERVER_LOCATION=$(SERVER_LOCATION) streamlit run gui.py
 
+gui-custom-models: ## Run Streamlit with Custom Models
+	SERVER_LOCATION=$(SERVER_LOCATION) CUSTOM_MODELS='true' streamlit run gui.py
+
 install: ## Install Requirement
 	pip install -r requirements.txt
 

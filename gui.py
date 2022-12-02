@@ -21,11 +21,26 @@ left, center, right = st.columns([1, 3, 1])
 no_prompt_text_container = image_preview_tab.empty()
 no_prompt_text_container.warning("Nothing but crickets here, try generating something first.")
 
+# TYPE Variables
+CUSTOM_MODELS = False
+
 # ENV Variables
 HOST_LOCATION = os.environ['SERVER_LOCATION']
 
+CUSTOM_MODELS_ENV = os.environ.get('CUSTOM_MODELS', default='false')
+if CUSTOM_MODELS_ENV == 'true':
+    CUSTOM_MODELS = True
+
 DIFFUSION_MODELS = [*load_yaml(open('models.yml'), Loader=Loader)]
 CLIP_MODELS = ['RN50::openai', 'RN50::yfcc15m', 'RN50::cc12m', 'RN50-quickgelu::openai', 'RN50-quickgelu::yfcc15m', 'RN50-quickgelu::cc12m', 'RN101::openai', 'RN101::yfcc15m', 'RN101-quickgelu::openai', 'RN101-quickgelu::yfcc15m', 'RN50x4::openai', 'RN50x16::openai', 'RN50x64::openai', 'ViT-B-32::openai', 'ViT-B-32::laion400m_e31', 'ViT-B-32::laion400m_e32', 'ViT-B-32::laion2b_e16', 'ViT-B-32::laion2b_s34b_b79k', 'ViT-B-32-quickgelu::openai', 'ViT-B-32-quickgelu::laion400m_e31', 'ViT-B-32-quickgelu::laion400m_e32', 'ViT-B-16::openai', 'ViT-B-16::laion400m_e31', 'ViT-B-16::laion400m_e32', 'ViT-B-16-plus-240::laion400m_e31', 'ViT-B-16-plus-240::laion400m_e32', 'ViT-L-14::openai', 'ViT-L-14::laion400m_e31', 'ViT-L-14::laion400m_e32', 'ViT-L-14::laion2b_s32b_b82k', 'ViT-L-14-336::openai', 'ViT-H-14::laion2b_s32b_b79k', 'ViT-g-14::laion2b_s12b_b42k'] # https://github.com/mlfoundations/open_clip#pretrained-model-interface
+
+if CUSTOM_MODELS:
+    try:
+        DIFFUSION_CUSTOM_MODELS = [*load_yaml(open('models.private.yml'), Loader=Loader)]
+    except FileNotFoundError:
+        print("You have CUSTOM_MODELS set to true, but you don't have a models.private.yml file. Please create one and try again.")
+        DIFFUSION_CUSTOM_MODELS = []
+    DIFFUSION_MODELS = [*DIFFUSION_MODELS, *DIFFUSION_CUSTOM_MODELS]
 
 # Initialize session state
 # st.session_state['create_request'] = []

@@ -2,3 +2,4 @@
 .vscode/settings.json
 .envrc
 __pycache__
+models.private.yml
