@@ -232,9 +232,9 @@ You should use downloadable links for the .pt files.
     use_scale_shift_norm: true
 ```
 
-The required parameters are located in the [Discoart repository README](https://github.com/jina-ai/discoart#environment-variables).
-
 ### Discoart Setup
+Discoart should be setup to accept custom models. The required parameters are located in the [Discoart repository README](https://github.com/jina-ai/discoart#environment-variables).
+
 You should set the following environment variables and the following volume bind.
 
 `docker-compose.yml`
@@ -253,7 +253,7 @@ docker run --entrypoint "python" -p 51001:51001 -v $(pwd):/home/jovyan/ -v $HOME
 
 ### Disco Diffusion UI
 
-After you setup Discoart to use your custom diffusion model, you can should create a `model.private.yml` file inside the Docker container to tell the UI about your models. You can simply use the same `models.yml` in the previous step after renaming it.
+After you setup Discoart to use your custom diffusion model, you should create a `model.private.yml` file inside the Docker container to tell the UI about your models. You can simply use the same `models.yml` in the previous step after renaming it.
 
 ```bash
 docker run -p 8501:8501 -e SERVER_LOCATION="<SERVER LOCATION>" -e CUSTOM_MODELS='true' -v "$(pwd)"/models.yml:/app/models.private.yml:ro  uetuluk/disco-diffusion-ui:latest
